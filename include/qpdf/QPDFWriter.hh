@@ -24,7 +24,6 @@
 #include <qpdf/Types.h>
 
 #include <bitset>
-#include <concepts>
 #include <cstdio>
 #include <functional>
 #include <list>
@@ -33,6 +32,7 @@
 #include <set>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <vector>
 
 #include <qpdf/Constants.h>
@@ -462,7 +462,8 @@ class QPDFWriter
     void writeBinary(unsigned long long val, unsigned int bytes);
     QPDFWriter& write(std::string_view str);
     QPDFWriter& write(size_t count, char c);
-    QPDFWriter& write(std::integral auto val);
+    template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+    QPDFWriter& write(T val);
     QPDFWriter& write_name(std::string const& str);
     QPDFWriter& write_string(std::string const& str, bool force_binary = false);
     QPDFWriter& write_encrypted(std::string_view str);
