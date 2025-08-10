@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <stdexcept>
+#include <type_traits>
 
 using namespace std::literals;
 using namespace qpdf;
@@ -1045,8 +1046,9 @@ QPDFWriter::write(std::string_view str)
     return *this;
 }
 
+template <typename T, typename>
 QPDFWriter&
-QPDFWriter::write(std::integral auto val)
+QPDFWriter::write(T val)
 {
     m->pipeline->write(std::to_string(val));
     return *this;
