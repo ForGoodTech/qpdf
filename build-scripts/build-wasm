@@ -9,6 +9,12 @@ EMSDK_HOME="${EMSDK_HOME:-/home/ubuntu/3rdParty/emsdk}"
 # Load emscripten environment
 source "$EMSDK_HOME/emsdk_env.sh" >/dev/null
 
+# Ensure required libraries are available in the Emscripten sysroot.
+# embuilder will build and install ports such as zlib and libjpeg if they
+# are not already present. This allows CMake to locate them during
+# configuration.
+embuilder build zlib libjpeg >/dev/null
+
 configure() {
     emcmake cmake -S "$SRCDIR" -B "$BUILD_DIR" \
         -DCMAKE_BUILD_TYPE=Release \
@@ -25,6 +31,8 @@ build() {
     emcc "$SRCDIR/wasm/shim.cc" "$lib" -O3 \
         -I"$SRCDIR/include" \
         -s MODULARIZE=1 \
+        -s USE_ZLIB=1 \
+        -s USE_LIBJPEG=1 \
         -s EXPORTED_FUNCTIONS='["_qpdf_wasm_compress"]' \
         -o "$BUILD_DIR/qpdf-wasm.js"
 }
