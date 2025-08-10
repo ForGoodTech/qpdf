@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+SRCDIR=$(cd "$(dirname "$0")"/.. && pwd)
+BUILD_DIR="$SRCDIR/build-wasm"
+rm -rf "$BUILD_DIR"
+emcmake cmake -S "$SRCDIR" -B "$BUILD_DIR" \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DQPDF_BUILD_TESTS=OFF \
+  -DQPDF_BUILD_DOC=OFF \
+  -DQPDF_BUILD_EXAMPLES=OFF \
+  -DBUILD_SHARED_LIBS=OFF
+cmake --build "$BUILD_DIR" --target libqpdf
+LIB=$(find "$BUILD_DIR" -name libqpdf.a | head -n 1)
+emcc "$SRCDIR/wasm/shim.cc" "$LIB" -O3 \
+  -I"$SRCDIR/include" \
+  -s MODULARIZE=1 \
+  -s EXPORTED_FUNCTIONS='["_qpdf_wasm_compress"]' \
+  -o "$BUILD_DIR/qpdf-wasm.js"
+echo "WASM module created at $BUILD_DIR/qpdf-wasm.js"
