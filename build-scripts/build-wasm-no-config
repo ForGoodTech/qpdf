@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -xeuo pipefail
+
+SRCDIR=$(cd "$(dirname "$0")"/.. && pwd)
+BUILD_DIR="$SRCDIR/build-wasm"
+EMSDK_HOME="${EMSDK_HOME:-/home/ubuntu/3rdParty/emsdk}"
+
+# Load emscripten environment
+source "$EMSDK_HOME/emsdk_env.sh" >/dev/null
+
+# Ensure required libraries are available in the Emscripten sysroot.
+# embuilder will build and install ports such as zlib and libjpeg if they
+# are not already present. This allows CMake to locate them during build.
+embuilder build zlib libjpeg >/dev/null
+
+build() {
+    cmake --build "$BUILD_DIR" --target libqpdf
+    local lib
+    lib=$(find "$BUILD_DIR" -name libqpdf.a | head -n 1)
+    emcc "$SRCDIR/wasm/shim.cc" "$lib" -O3 \
+        -I"$SRCDIR/include" \
+        -s MODULARIZE=1 \
+        -s USE_ZLIB=1 \
+        -s USE_LIBJPEG=1 \
+        -s EXPORTED_FUNCTIONS='["_qpdf_wasm_compress"]' \
+        -o "$BUILD_DIR/qpdf-wasm.js"
+}
+
+build
+echo "WASM module created at $BUILD_DIR/qpdf-wasm.js"
