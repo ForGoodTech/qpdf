@@ -21,6 +21,19 @@
       ready = true;
     });
 
+    function compress(input, output) {
+      const encoder = new TextEncoder();
+      const inBuf = encoder.encode(input + '\0');
+      const inPtr = qpdf._malloc(inBuf.length);
+      qpdf.HEAPU8.set(inBuf, inPtr);
+      const outBuf = encoder.encode(output + '\0');
+      const outPtr = qpdf._malloc(outBuf.length);
+      qpdf.HEAPU8.set(outBuf, outPtr);
+      qpdf._qpdf_wasm_compress(inPtr, outPtr);
+      qpdf._free(inPtr);
+      qpdf._free(outPtr);
+    }
+
     document.getElementById('run').addEventListener('click', async () => {
       if (!ready) {
         alert('WASM not initialized yet');
@@ -39,7 +52,7 @@
         await file.stream().pipeTo(writable);
         const input = '/opfs/input.pdf';
         const output = '/opfs/output.pdf';
-        qpdf.ccall('qpdf_wasm_compress', 'number', ['string', 'string'], [input, output]);
+        compress(input, output);
         const outHandle = await root.getFileHandle('output.pdf');
         const outFile = await outHandle.getFile();
         const url = URL.createObjectURL(outFile);
@@ -53,7 +66,7 @@
       } else {
         const buf = new Uint8Array(await file.arrayBuffer());
         qpdf.FS.writeFile('input.pdf', buf);
-        qpdf.ccall('qpdf_wasm_compress', 'number', ['string', 'string'], ['input.pdf', 'output.pdf']);
+        compress('input.pdf', 'output.pdf');
         const out = qpdf.FS.readFile('output.pdf');
         const blob = new Blob([out], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
