@@ -10,9 +10,12 @@
   <script src="qpdf-wasm.js"></script>
   <script>
     let ready = false;
-    Module.onRuntimeInitialized = () => {
+    let qpdf;
+
+    Module().then((mod) => {
+      qpdf = mod;
       ready = true;
-    };
+    });
 
     document.getElementById('run').addEventListener('click', async () => {
       if (!ready) {
@@ -28,9 +31,9 @@
       const buf = new Uint8Array(await file.arrayBuffer());
       const input = 'input.pdf';
       const output = 'output.pdf';
-      Module.FS.writeFile(input, buf);
-      Module.callMain(['--compress-streams=y', input, output]);
-      const out = Module.FS.readFile(output);
+      qpdf.FS.writeFile(input, buf);
+      qpdf.ccall('qpdf_wasm_compress', 'number', ['string', 'string'], [input, output]);
+      const out = qpdf.FS.readFile(output);
       const blob = new Blob([out], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -38,8 +41,8 @@
       a.download = 'compressed.pdf';
       a.click();
       URL.revokeObjectURL(url);
-      Module.FS.unlink(input);
-      Module.FS.unlink(output);
+      qpdf.FS.unlink(input);
+      qpdf.FS.unlink(output);
     });
   </script>
 </body>
