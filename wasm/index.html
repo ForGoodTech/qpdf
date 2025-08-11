@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>qpdf wasm demo</title>
+</head>
+<body>
+  <input type="file" id="file" accept="application/pdf" />
+  <button id="run">Compress</button>
+  <script src="qpdf.js"></script>
+  <script>
+    let ready = false;
+    Module.onRuntimeInitialized = () => {
+      ready = true;
+    };
+
+    document.getElementById('run').addEventListener('click', async () => {
+      if (!ready) {
+        alert('WASM not initialized yet');
+        return;
+      }
+      const fi = document.getElementById('file');
+      if (!fi.files.length) {
+        alert('Select a PDF first');
+        return;
+      }
+      const file = fi.files[0];
+      const buf = new Uint8Array(await file.arrayBuffer());
+      const input = 'input.pdf';
+      const output = 'output.pdf';
+      Module.FS.writeFile(input, buf);
+      Module.callMain(['--compress-streams=y', input, output]);
+      const out = Module.FS.readFile(output);
+      const blob = new Blob([out], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'compressed.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
+      Module.FS.unlink(input);
+      Module.FS.unlink(output);
+    });
+  </script>
+</body>
+</html>
