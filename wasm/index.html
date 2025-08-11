@@ -31,6 +31,12 @@
       const buf = new Uint8Array(await file.arrayBuffer());
       const input = 'input.pdf';
       const output = 'output.pdf';
+      // qpdf.FS is Emscripten's in-memory filesystem used to pass data between
+      // JavaScript and the WebAssembly module.
+      if (!qpdf.FS) {
+        alert('Filesystem support not available in this build');
+        return;
+      }
       qpdf.FS.writeFile(input, buf);
       qpdf.ccall('qpdf_wasm_compress', 'number', ['string', 'string'], [input, output]);
       const out = qpdf.FS.readFile(output);
