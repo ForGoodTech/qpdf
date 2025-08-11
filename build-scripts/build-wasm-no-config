@@ -25,6 +25,7 @@ build() {
         -s USE_LIBJPEG=1 \
         -s EXPORTED_FUNCTIONS='["_qpdf_wasm_compress"]' \
         -o "$BUILD_DIR/qpdf-wasm.js"
+    cp "$SRCDIR/wasm/index.html" "$BUILD_DIR"
 }
 
 build
