@@ -14,6 +14,10 @@
 
     Module().then((mod) => {
       qpdf = mod;
+      if (qpdf.FS && qpdf.FS.filesystems && qpdf.FS.filesystems.OPFS) {
+        qpdf.FS.mkdir('/opfs');
+        qpdf.FS.mount(qpdf.FS.filesystems.OPFS, { root: '.' }, '/opfs');
+      }
       ready = true;
     });
 
@@ -28,27 +32,27 @@
         return;
       }
       const file = fi.files[0];
-      const buf = new Uint8Array(await file.arrayBuffer());
-      const input = 'input.pdf';
-      const output = 'output.pdf';
-      // qpdf.FS is Emscripten's in-memory filesystem used to pass data between
-      // JavaScript and the WebAssembly module.
-      if (!qpdf.FS) {
-        alert('Filesystem support not available in this build');
+      const root = await navigator.storage?.getDirectory?.();
+      if (!qpdf.FS || !qpdf.FS.filesystems?.OPFS || !root) {
+        alert('OPFS not supported in this browser');
         return;
       }
-      qpdf.FS.writeFile(input, buf);
+      const inputHandle = await root.getFileHandle('input.pdf', { create: true });
+      const writable = await inputHandle.createWritable();
+      await file.stream().pipeTo(writable);
+      const input = '/opfs/input.pdf';
+      const output = '/opfs/output.pdf';
       qpdf.ccall('qpdf_wasm_compress', 'number', ['string', 'string'], [input, output]);
-      const out = qpdf.FS.readFile(output);
-      const blob = new Blob([out], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
+      const outHandle = await root.getFileHandle('output.pdf');
+      const outFile = await outHandle.getFile();
+      const url = URL.createObjectURL(outFile);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'compressed.pdf';
       a.click();
       URL.revokeObjectURL(url);
-      qpdf.FS.unlink(input);
-      qpdf.FS.unlink(output);
+      await root.removeEntry('input.pdf');
+      await root.removeEntry('output.pdf');
     });
   </script>
 </body>
