@@ -104,8 +104,8 @@ qpdf_wasm_compress(char const* infilename, char const* outfilename, char const* 
                 try {
                     auto buf = oh.getStreamData(qpdf_dl_specialized);
                     compress_stream(oh, buf, lvl);
-                } catch (QPDFExc const& e) {
-                    if (e.getMessageDetail().find("getStreamData called on unfilterable stream") ==
+                } catch (std::exception const& e) {
+                    if (std::string(e.what()).find("getStreamData called on unfilterable stream") ==
                         std::string::npos) {
                         throw;
                     }
