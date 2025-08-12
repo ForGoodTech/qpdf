@@ -72,7 +72,7 @@ If qpdf is built with [zopfli](https://github.com/google/zopfli) support and the
 
 The environment variable `QPDF_ZOPFLI` can be set to the following values:
 * `disabled` (or unset): do not use zopfli
-* `force`: use zopfli; fail if zopfli is not compiled in
+* `force`: use zopfli if available; otherwise warn and fall back to zlib
 * `silent`: use zopfli if available; otherwise silently fall back to zlib
 * any other value: use zopfli if available, and warn if not
 

@@ -376,7 +376,10 @@ Pl_Flate::zopfli_check_env(QPDFLogger* logger)
     // This behavior is known in QPDFJob (for the --zopfli argument), Pl_Flate.hh, README.md,
     // and the manual. Do a case-insensitive search for zopfli if changing the behavior.
     if (value == "force") {
-        throw std::runtime_error("QPDF_ZOPFLI=force, and zopfli support is not enabled");
+        logger->warn("QPDF_ZOPFLI=force is set, but libqpdf was not built with zopfli support\n");
+        logger->warn(
+            "Set QPDF_ZOPFLI=silent to suppress this warning and use zopfli when available.\n");
+        return false;
     }
     logger->warn("QPDF_ZOPFLI is set, but libqpdf was not built with zopfli support\n");
     logger->warn(

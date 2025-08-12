@@ -81,8 +81,8 @@ class QPDF_DLL_CLASS Pl_Flate: public Pipeline
     // If zopfli is supported, returns true. Otherwise, check the QPDF_ZOPFLI
     // environment variable as follows:
     // - "disabled" or "silent": return true
-    // - "force": qpdf_exit_error, throw an exception
-    // - Any other value: issue a warning, and return false
+    // - "force": issue a warning and return false
+    // - Any other value: issue a warning and return false
     QPDF_DLL
     static bool zopfli_check_env(QPDFLogger* logger = nullptr);
 

@@ -73,8 +73,8 @@ if ($zopfli =~ m/^0/) {
                  $td->NORMALIZE_NEWLINES);
     $td->runtest("force",
                  {$td->COMMAND => "QPDF_ZOPFLI=force zlib-flate -compress < a.uncompressed"},
-                 {$td->REGEXP => "QPDF_ZOPFLI=force, and zopfli support is not enabled",
-                      $td->EXIT_STATUS => 2},
+                 {$td->REGEXP => "QPDF_ZOPFLI=force is set, but libqpdf was not built with zopfli support",
+                      $td->EXIT_STATUS => 0},
                  $td->NORMALIZE_NEWLINES);
     $td->runtest("silent",
                  {$td->COMMAND => "QPDF_ZOPFLI=silent zlib-flate -compress < a.uncompressed > $dev_null"},

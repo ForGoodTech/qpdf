@@ -51,10 +51,10 @@ if (! $zopfli_enabled) {
                  {$td->COMMAND => "qpdf-test-compare a.pdf minimal-out.pdf"},
                  {$td->FILE => "minimal-out.pdf", $td->EXIT_STATUS => 0});
 
-    $td->runtest("zopfli error",
+    $td->runtest("zopfli force fallback",
                  {$td->COMMAND => "QPDF_ZOPFLI=force qpdf minimal.pdf a.pdf"},
-                 {$td->REGEXP => "QPDF_ZOPFLI=force, and zopfli support is not enabled",
-                      $td->EXIT_STATUS => 2},
+                 {$td->REGEXP => "QPDF_ZOPFLI=force is set, but libqpdf was not built with zopfli support",
+                      $td->EXIT_STATUS => 3},
                  $td->NORMALIZE_NEWLINES);
 
 } else {

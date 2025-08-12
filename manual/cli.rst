@@ -4068,7 +4068,8 @@ Here are the supported values for ``QPDF_ZOPFLI``:
      - use zopfli if available; otherwise silently fall back to zlib
 
    - - ``force``
-     - use zopfli if available; fail with an error if not available
+     - use zopfli if available; otherwise issue a warning and fall
+       back to zlib
 
    - - any other value
      - use zopfli if available; otherwise issue a warning and fall
