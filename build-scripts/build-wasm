@@ -21,7 +21,8 @@ configure() {
         -DQPDF_BUILD_TESTS=OFF \
         -DQPDF_BUILD_DOC=OFF \
         -DQPDF_BUILD_EXAMPLES=OFF \
-        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_CXX_FLAGS="-fexceptions"
 }
 
 build() {
@@ -36,6 +37,7 @@ build() {
         -s FORCE_FILESYSTEM=1 \
         -s EXPORTED_FUNCTIONS='["_qpdf_wasm_compress","_malloc","_free"]' \
         -s EXPORTED_RUNTIME_METHODS='["FS"]' \
+        -fexceptions -s DISABLE_EXCEPTION_CATCHING=0 \
         -o "$BUILD_DIR/qpdf-wasm.js"
     cp "$SRCDIR/wasm/index.html" "$BUILD_DIR"
 }
