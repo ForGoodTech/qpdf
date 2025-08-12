@@ -40,12 +40,10 @@
       qpdf.HEAPU8.set(lvlBuf, lvlPtr);
       const rc = qpdf._qpdf_wasm_compress(inPtr, outPtr, lvlPtr);
       console.log('qpdf_wasm_compress returned', rc);
-      if (rc !== 0) {
-        console.error('Compression failed');
-      }
       qpdf._free(inPtr);
       qpdf._free(outPtr);
       qpdf._free(lvlPtr);
+      return rc;
     }
 
     document.getElementById('run').addEventListener('click', async () => {
@@ -69,7 +67,10 @@
           const input = '/opfs/input.pdf';
           const output = '/opfs/output.pdf';
           const level = document.getElementById('level').value;
-          compress(input, output, level);
+          const rc = compress(input, output, level);
+          if (rc !== 0) {
+            throw new Error('Compression failed');
+          }
           const outHandle = await root.getFileHandle('output.pdf');
           const outFile = await outHandle.getFile();
           const url = URL.createObjectURL(outFile);
@@ -85,7 +86,10 @@
           const buf = new Uint8Array(await file.arrayBuffer());
           qpdf.FS.writeFile('input.pdf', buf);
           const level = document.getElementById('level').value;
-          compress('input.pdf', 'output.pdf', level);
+          const rc = compress('input.pdf', 'output.pdf', level);
+          if (rc !== 0) {
+            throw new Error('Compression failed');
+          }
           const out = qpdf.FS.readFile('output.pdf');
           const blob = new Blob([out], { type: 'application/pdf' });
           const url = URL.createObjectURL(blob);
