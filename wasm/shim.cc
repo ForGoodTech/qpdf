@@ -1,13 +1,14 @@
+#include <qpdf/Buffer.hh>
 #include <qpdf/Constants.h>
 #include <qpdf/QPDF.hh>
+#include <qpdf/QPDFExc.hh>
 #include <qpdf/QPDFWriter.hh>
-#include <qpdf/Buffer.hh>
-#include <zlib.h>
 #include <array>
 #include <cmath>
 #include <exception>
-#include <vector>
 #include <string>
+#include <vector>
+#include <zlib.h>
 
 static double
 shannon_entropy(unsigned char const* data, size_t len)
@@ -100,8 +101,15 @@ qpdf_wasm_compress(char const* infilename, char const* outfilename, char const* 
                 }
                 compress_stream(oh, buf, lvl);
             } else {
-                auto buf = oh.getStreamData(qpdf_dl_specialized);
-                compress_stream(oh, buf, lvl);
+                try {
+                    auto buf = oh.getStreamData(qpdf_dl_specialized);
+                    compress_stream(oh, buf, lvl);
+                } catch (QPDFExc const& e) {
+                    if (e.getMessageDetail().find("getStreamData called on unfilterable stream") ==
+                        std::string::npos) {
+                        throw;
+                    }
+                }
             }
         }
 
