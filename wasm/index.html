@@ -27,6 +27,7 @@
     });
 
     function compress(input, output, level) {
+      console.log('compress()', { input, output, level });
       const encoder = new TextEncoder();
       const inBuf = encoder.encode(input + '\0');
       const inPtr = qpdf._malloc(inBuf.length);
@@ -37,57 +38,67 @@
       const lvlBuf = encoder.encode(level + '\0');
       const lvlPtr = qpdf._malloc(lvlBuf.length);
       qpdf.HEAPU8.set(lvlBuf, lvlPtr);
-      qpdf._qpdf_wasm_compress(inPtr, outPtr, lvlPtr);
+      const rc = qpdf._qpdf_wasm_compress(inPtr, outPtr, lvlPtr);
+      console.log('qpdf_wasm_compress returned', rc);
+      if (rc !== 0) {
+        console.error('Compression failed');
+      }
       qpdf._free(inPtr);
       qpdf._free(outPtr);
       qpdf._free(lvlPtr);
     }
 
     document.getElementById('run').addEventListener('click', async () => {
-      if (!ready) {
-        alert('WASM not initialized yet');
-        return;
-      }
-      const fi = document.getElementById('file');
-      if (!fi.files.length) {
-        alert('Select a PDF first');
-        return;
-      }
-      const file = fi.files[0];
-      if (qpdf.FS && qpdf.FS.filesystems?.OPFS && navigator.storage?.getDirectory) {
-        const root = await navigator.storage.getDirectory();
-        const inputHandle = await root.getFileHandle('input.pdf', { create: true });
-        const writable = await inputHandle.createWritable();
-        await file.stream().pipeTo(writable);
-        const input = '/opfs/input.pdf';
-        const output = '/opfs/output.pdf';
-        const level = document.getElementById('level').value;
-        compress(input, output, level);
-        const outHandle = await root.getFileHandle('output.pdf');
-        const outFile = await outHandle.getFile();
-        const url = URL.createObjectURL(outFile);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'compressed.pdf';
-        a.click();
-        URL.revokeObjectURL(url);
-        await root.removeEntry('input.pdf');
-        await root.removeEntry('output.pdf');
-      } else {
-        const buf = new Uint8Array(await file.arrayBuffer());
-        qpdf.FS.writeFile('input.pdf', buf);
-        const level = document.getElementById('level').value;
-        compress('input.pdf', 'output.pdf', level);
-        const out = qpdf.FS.readFile('output.pdf');
-        const blob = new Blob([out], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'compressed.pdf';
-        a.click();
-        URL.revokeObjectURL(url);
-        qpdf.FS.unlink('input.pdf');
-        qpdf.FS.unlink('output.pdf');
+      try {
+        if (!ready) {
+          alert('WASM not initialized yet');
+          return;
+        }
+        const fi = document.getElementById('file');
+        if (!fi.files.length) {
+          alert('Select a PDF first');
+          return;
+        }
+        const file = fi.files[0];
+        if (qpdf.FS && qpdf.FS.filesystems?.OPFS && navigator.storage?.getDirectory) {
+          console.log('Using OPFS');
+          const root = await navigator.storage.getDirectory();
+          const inputHandle = await root.getFileHandle('input.pdf', { create: true });
+          const writable = await inputHandle.createWritable();
+          await file.stream().pipeTo(writable);
+          const input = '/opfs/input.pdf';
+          const output = '/opfs/output.pdf';
+          const level = document.getElementById('level').value;
+          compress(input, output, level);
+          const outHandle = await root.getFileHandle('output.pdf');
+          const outFile = await outHandle.getFile();
+          const url = URL.createObjectURL(outFile);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'compressed.pdf';
+          a.click();
+          URL.revokeObjectURL(url);
+          await root.removeEntry('input.pdf');
+          await root.removeEntry('output.pdf');
+        } else {
+          console.log('Using in-memory FS');
+          const buf = new Uint8Array(await file.arrayBuffer());
+          qpdf.FS.writeFile('input.pdf', buf);
+          const level = document.getElementById('level').value;
+          compress('input.pdf', 'output.pdf', level);
+          const out = qpdf.FS.readFile('output.pdf');
+          const blob = new Blob([out], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'compressed.pdf';
+          a.click();
+          URL.revokeObjectURL(url);
+          qpdf.FS.unlink('input.pdf');
+          qpdf.FS.unlink('output.pdf');
+        }
+      } catch (e) {
+        console.error('Error in compression handler', e);
       }
     });
   </script>

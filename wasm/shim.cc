@@ -112,6 +112,7 @@ qpdf_wasm_compress(char const* infilename, char const* outfilename, char const* 
         w.write();
         return 0;
     } catch (std::exception& e) {
+        fprintf(stderr, "qpdf_wasm_compress exception: %s\n", e.what());
         return 1;
     }
 }
