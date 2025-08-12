@@ -6,6 +6,11 @@
 </head>
 <body>
   <input type="file" id="file" accept="application/pdf" />
+  <select id="level">
+    <option value="fast">Fast</option>
+    <option value="balanced" selected>Balanced</option>
+    <option value="smallest">Smallest</option>
+  </select>
   <button id="run">Compress</button>
   <script src="qpdf-wasm.js"></script>
   <script>
@@ -21,7 +26,7 @@
       ready = true;
     });
 
-    function compress(input, output) {
+    function compress(input, output, level) {
       const encoder = new TextEncoder();
       const inBuf = encoder.encode(input + '\0');
       const inPtr = qpdf._malloc(inBuf.length);
@@ -29,9 +34,13 @@
       const outBuf = encoder.encode(output + '\0');
       const outPtr = qpdf._malloc(outBuf.length);
       qpdf.HEAPU8.set(outBuf, outPtr);
-      qpdf._qpdf_wasm_compress(inPtr, outPtr);
+      const lvlBuf = encoder.encode(level + '\0');
+      const lvlPtr = qpdf._malloc(lvlBuf.length);
+      qpdf.HEAPU8.set(lvlBuf, lvlPtr);
+      qpdf._qpdf_wasm_compress(inPtr, outPtr, lvlPtr);
       qpdf._free(inPtr);
       qpdf._free(outPtr);
+      qpdf._free(lvlPtr);
     }
 
     document.getElementById('run').addEventListener('click', async () => {
@@ -52,7 +61,8 @@
         await file.stream().pipeTo(writable);
         const input = '/opfs/input.pdf';
         const output = '/opfs/output.pdf';
-        compress(input, output);
+        const level = document.getElementById('level').value;
+        compress(input, output, level);
         const outHandle = await root.getFileHandle('output.pdf');
         const outFile = await outHandle.getFile();
         const url = URL.createObjectURL(outFile);
@@ -66,7 +76,8 @@
       } else {
         const buf = new Uint8Array(await file.arrayBuffer());
         qpdf.FS.writeFile('input.pdf', buf);
-        compress('input.pdf', 'output.pdf');
+        const level = document.getElementById('level').value;
+        compress('input.pdf', 'output.pdf', level);
         const out = qpdf.FS.readFile('output.pdf');
         const blob = new Blob([out], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
