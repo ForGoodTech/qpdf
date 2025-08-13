@@ -70,9 +70,11 @@
           const levels = [1, 5, 9];
           const outputs = ['fast.pdf', 'mid.pdf', 'small.pdf'];
           let best = { rate: Infinity, idx: 0 };
+          let progress = 0;
           for (let i = 0; i < levels.length; ++i) {
             const r = compress(input, `/opfs/${outputs[i]}`, levels[i]);
             if (r.rate < best.rate) best = { rate: r.rate, idx: i };
+            progress = r.progress;
           }
           if (best.rate >= 1) {
             alert('File is already compact');
@@ -82,7 +84,7 @@
           }
           const outHandle = await root.getFileHandle(outputs[best.idx]);
           const outFile = await outHandle.getFile();
-          progressBar.value = qpdf._qpdf_wasm_get_progress();
+          progressBar.value = progress;
           const url = URL.createObjectURL(outFile);
           const a = document.createElement('a');
           a.href = url;
@@ -103,7 +105,7 @@
           }
           const outHandle = await root.getFileHandle('output.pdf');
           const outFile = await outHandle.getFile();
-          progressBar.value = qpdf._qpdf_wasm_get_progress();
+          progressBar.value = r.progress;
           const url = URL.createObjectURL(outFile);
           const a = document.createElement('a');
           a.href = url;
@@ -120,9 +122,11 @@
           const levels = [1, 5, 9];
           const outputs = ['fast.pdf', 'mid.pdf', 'small.pdf'];
           let best = { rate: Infinity, idx: 0 };
+          let progress = 0;
           for (let i = 0; i < levels.length; ++i) {
             const r = compress('input.pdf', outputs[i], levels[i]);
             if (r.rate < best.rate) best = { rate: r.rate, idx: i };
+            progress = r.progress;
           }
           if (best.rate >= 1) {
             alert('File is already compact');
@@ -131,7 +135,7 @@
             return;
           }
           const out = qpdf.FS.readFile(outputs[best.idx]);
-          progressBar.value = qpdf._qpdf_wasm_get_progress();
+          progressBar.value = progress;
           const blob = new Blob([out], { type: 'application/pdf' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
@@ -151,7 +155,7 @@
             return;
           }
           const out = qpdf.FS.readFile('output.pdf');
-          progressBar.value = qpdf._qpdf_wasm_get_progress();
+          progressBar.value = r.progress;
           const blob = new Blob([out], { type: 'application/pdf' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
